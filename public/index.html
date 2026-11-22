@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kimsha Bingo Ethiopia</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --accent: #10b981;
+      --accent-dark: #059669;
+      --gold: #f59e0b;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --danger: #ef4444;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding-bottom: 32px;
+    }
+    .container {
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 14px;
+    }
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--card);
+      padding: 12px 14px;
+      border-radius: 14px;
+      margin-bottom: 12px;
+    }
+    .brand { font-weight: 800; font-size: 16px; }
+    .lang-btn {
+      background: #334155;
+      color: var(--text);
+      border: none;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .stat-box {
+      background: var(--card);
+      padding: 10px;
+      border-radius: 12px;
+      text-align: center;
+    }
+    .stat-label { font-size: 11px; color: var(--muted); }
+    .stat-val { font-size: 16px; font-weight: 800; margin-top: 2px; }
+    .caller-box {
+      background: linear-gradient(135deg, #064e3b, #1e293b);
+      border: 1px solid #10b98155;
+      border-radius: 16px;
+      padding: 14px;
+      text-align: center;
+      margin-bottom: 12px;
+    }
+    .ball {
+      width: 68px;
+      height: 68px;
+      line-height: 68px;
+      border-radius: 50%;
+      background: var(--gold);
+      color: #0f172a;
+      font-size: 26px;
+      font-weight: 900;
+      margin: 8px auto;
+    }
+    .recent { font-size: 12px; color: var(--muted); }
+    .card-panel {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+    .bingo-header, .bingo-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+      text-align: center;
+    }
+    .bingo-header div {
+      font-weight: 900;
+      color: var(--gold);
+      padding: 4px 0;
+    }
+    .cell {
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #0f172a;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .cell.marked {
+      background: var(--accent);
+      color: #052e16;
+    }
+    .cell.free {
+      background: #334155;
+      color: var(--gold);
+      font-size: 11px;
+    }
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    button.primary {
+      background: var(--accent);
+      color: #052e16;
+      border: none;
+      padding: 12px;
+      border-radius: 12px;
+      font-weight: 800;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    button.primary:disabled { opacity: 0.45; cursor: not-allowed; }
+    button.claim {
+      background: var(--gold);
+      color: #0f172a;
+      border: none;
+      padding: 12px;
+      border-radius: 12px;
+      font-weight: 900;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .wallet-box {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 14px;
+    }
+    .wallet-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    input, select {
+      background: #0f172a;
+      color: var(--text);
+      border: 1px solid #334155;
+      border-radius: 10px;
+      padding: 9px;
+      font-size: 14px;
+    }
+    input { width: 90px; }
+    select { flex: 1; }
+    button.sec {
+      background: #334155;
+      color: var(--text);
+      border: none;
+      padding: 9px 12px;
+      border-radius: 10px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .msg {
+      margin-top: 10px;
+      font-size: 13px;
+      min-height: 18px;
+      color: #fde68a;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="topbar">
+      <div class="brand" id="titleText">Kimsha Bingo Ethiopia</div>
+      <button class="lang-btn" id="langBtn">AM / EN</button>
+    </div>
+
+    <div class="stats">
+      <div class="stat-box">
+        <div class="stat-label" id="lblRound">Round</div>
+        <div class="stat-val" id="roundVal">1</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label" id="lblPot">Prize Pot</div>
+        <div class="stat-val" id="potVal">0 ETB</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label" id="lblBalance">Balance</div>
+        <div class="stat-val" id="balVal">250 ETB</div>
+      </div>
+    </div>
+
+    <div class="caller-box">
+      <div id="statusText">Waiting for players...</div>
+      <div class="ball" id="currentBall">--</div>
+      <div class="recent" id="recentCalls">Called: -</div>
+    </div>
+
+    <div class="card-panel">
+      <div class="bingo-header">
+        <div>B</div><div>I</div><div>N</div><div>G</div><div>O</div>
+      </div>
+      <div class="bingo-grid" id="bingoGrid"></div>
+      <div class="actions">
+        <button class="primary" id="buyBtn">Buy Card (10 ETB)</button>
+        <button class="claim" id="claimBtn">BINGO!</button>
+      </div>
+      <div class="msg" id="msgBox"></div>
+    </div>
+
+    <div class="wallet-box">
+      <strong id="walletTitle">Wallet (Telebirr / CBE)</strong>
+      <div class="wallet-row">
+        <input type="number" id="amtInput" value="50" min="1" />
+        <select id="methodSelect">
+          <option value="Telebirr">Telebirr</option>
+          <option value="CBE">CBE</option>
+        </select>
+        <button class="sec" id="depBtn">Deposit</button>
+        <button class="sec" id="witBtn">Withdraw</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const tg = window.Telegram && window.Telegram.WebApp;
+    if (tg) tg.expand();
+
+    const tgUser = tg && tg.initDataUnsafe && tg.initDataUnsafe.user;
+    const userId = tgUser ? String(tgUser.id) : 'demo_player';
+
+    let lang = 'am';
+    let manualMarks = new Set(['FREE']);
+    let latestState = null;
+
+    const i18n = {
+      am: {
+        title: 'ቅምሻ ቢንጎ ኢትዮጵያ',
+        round: 'ዙር',
+        pot: 'የሽልማት ገንዳ',
+        balance: 'ቀሪ ሂሳብ',
+        waiting: 'ተጫዋቾችን በመጠባበቅ ላይ...',
+        drawing: 'ቁጥሮች እየወጡ ነው...',
+        finished: 'ዙሩ ተጠናቋል! አዲስ ዙር ይጀምራል...',
+        called: 'የወጡ ቁጥሮች',
+        buy: 'ካርድ ግዛ (10 ብር)',
+        claim: 'ቢንጎ! (አሸንፌያለሁ)',
+        wallet: 'ቦርሳ (ቴሌብር / ንግድ ባንክ)',
+        deposit: 'አስገባ',
+        withdraw: 'አውጣ'
+      },
+      en: {
+        title: 'Kimsha Bingo Ethiopia',
+        round: 'Round',
+        pot: 'Prize Pot',
+        balance: 'Balance',
+        waiting: 'Waiting for players...',
+        drawing: 'Drawing numbers...',
+        finished: 'Round finished! Next round soon...',
+        called: 'Called',
+        buy: 'Buy Card (10 ETB)',
+        claim: 'BINGO!',
+        wallet: 'Wallet (Telebirr / CBE)',
+        deposit: 'Deposit',
+        withdraw: 'Withdraw'
+      }
+    };
+
+    function applyLang() {
+      const t = i18n[lang];
+      document.getElementById('titleText').textContent = t.title;
+      document.getElementById('lblRound').textContent = t.round;
+      document.getElementById('lblPot').textContent = t.pot;
+      document.getElementById('lblBalance').textContent = t.balance;
+      document.getElementById('buyBtn').textContent = t.buy;
+      document.getElementById('claimBtn').textContent = t.claim;
+      document.getElementById('walletTitle').textContent = t.wallet;
+      document.getElementById('depBtn').textContent = t.deposit;
+      document.getElementById('witBtn').textContent = t.withdraw;
+      if (latestState) renderState(latestState);
+    }
+
+    function renderGrid(card) {
+      const grid = document.getElementById('bingoGrid');
+      grid.innerHTML = '';
+      for (let r = 0; r < 5; r++) {
+        for (let c = 0; c < 5; c++) {
+          const val = card[c][r];
+          const cell = document.createElement('div');
+          cell.className = 'cell' + (val === 'FREE' ? ' free marked' : '');
+          cell.textContent = val === 'FREE' ? 'FREE' : val;
+          if (val !== 'FREE' && manualMarks.has(val)) {
+            cell.classList.add('marked');
+          }
+          cell.onclick = () => {
+            if (val === 'FREE') return;
+            if (manualMarks.has(val)) manualMarks.delete(val);
+            else manualMarks.add(val);
+            cell.classList.toggle('marked');
+          };
+          grid.appendChild(cell);
+        }
+      }
+    }
+
+    function renderState(data) {
+      latestState = data;
+      const t = i18n[lang];
+      document.getElementById('roundVal').textContent = data.roundNumber;
+      document.getElementById('potVal').textContent = `${data.potBirr} ETB`;
+      document.getElementById('balVal').textContent = `${data.user.balance} ETB`;
+      document.getElementById('currentBall').textContent = data.currentNumber ?? '--';
+
+      if (data.winner) {
+        document.getElementById('statusText').textContent =
+          `Winner: ${data.winner.name} (${data.winner.prizeBirr} ETB)`;
+      } else if (data.status === 'drawing') {
+        document.getElementById('statusText').textContent = t.drawing;
+      } else if (data.status === 'finished') {
+        document.getElementById('statusText').textContent = t.finished;
+      } else {
+        document.getElementById('statusText').textContent = t.waiting;
+      }
+
+      const lastCalls = data.calledNumbers.slice(-8).join(', ') || '-';
+      document.getElementById('recentCalls').textContent = `${t.called}: ${lastCalls}`;
+
+      const buyBtn = document.getElementById('buyBtn');
+      buyBtn.disabled = data.user.selectedBoard !== null || data.status !== 'waiting';
+
+      if (data.user.selectedBoard === null && data.calledNumbers.length === 0) {
+        manualMarks = new Set(['FREE']);
+      }
+      renderGrid(data.user.card);
+    }
+
+    async function fetchState() {
+      try {
+        const res = await fetch(`/api/state?userId=${encodeURIComponent(userId)}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        renderState(data);
+      } catch (_) {}
+    }
+
+    document.getElementById('langBtn').onclick = () => {
+      lang = lang === 'am' ? 'en' : 'am';
+      applyLang();
+    };
+
+    document.getElementById('buyBtn').onclick = async () => {
+      const res = await fetch('/api/buy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, boardNumber: Math.floor(Math.random() * 100) + 1 })
+      });
+      const data = await res.json();
+      document.getElementById('msgBox').textContent = data.ok ? 'Card bought!' : (data.error || 'Error');
+      fetchState();
+    };
+
+    document.getElementById('claimBtn').onclick = async () => {
+      const res = await fetch('/api/claim', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId })
+      });
+      const data = await res.json();
+      document.getElementById('msgBox').textContent = data.ok
+        ? `BINGO! Won ${data.winner.prizeBirr} ETB!`
+        : (data.error || 'Not ready');
+      fetchState();
+    };
+
+    async function walletAction(endpoint) {
+      const amount = Number(document.getElementById('amtInput').value);
+      const method = document.getElementById('methodSelect').value;
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, amount, method })
+      });
+      const data = await res.json();
+      document.getElementById('msgBox').textContent = data.ok
+        ? `${method}: Balance ${data.balance} ETB`
+        : (data.error || 'Wallet error');
+      fetchState();
+    }
+
+    document.getElementById('depBtn').onclick = () => walletAction('/api/wallet/deposit');
+    document.getElementById('witBtn').onclick = () => walletAction('/api/wallet/withdraw');
+
+    applyLang();
+    fetchState();
+    setInterval(fetchState, 2000);
+  </script>
+</body>
+</html>
